@@ -1,7 +1,8 @@
 """A bare-bones egocentric network survey."""
 
-import csv
+import datetime
 import itertools
+import pickle
 
 
 def get_friend(i, n):
@@ -13,13 +14,27 @@ def get_friend(i, n):
 
 def get_edge(pair):
     """Ask the user whether two friends are friends with each other."""
-    q = "Do {0} and {1} like to spend time together? ".format(pair[0], pair[1])
+    q = "Do {0} and {1} like to spend time together? (enter 'y' or 'n') ".format(pair[0], pair[1])
     response = input(q)
     valid_responses = ['y', 'ye', 'yes', 'es', '1']
     connected = 0
     if response.lower() in valid_responses:
         connected = 1
     return (pair, connected)
+
+
+def save_edges(edges, name, pid):
+    """Save the egocentric graph."""
+    d = {'name': name, 'pid': pid}
+    for edge in edges:
+        d[edge[0]] = edge[1]
+
+    out_filename = "{0}-{1}.pickle".format(
+        datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+        pid
+    )
+    with open(out_filename, 'wb') as out_file:
+        pickle.dump(d, out_file)
 
 
 if __name__ == "__main__":
@@ -34,7 +49,10 @@ if __name__ == "__main__":
           "dinner, drinks, films, visiting one another's homes, studying "
           "together, exercising together, and so on?\n")
 
-    n_friends = 10
+    n_friends = 12
+    print("\nWe will ask you to enter up to {0} names. If you finish before "
+          "entering {0} names, enter \"DONE\".".format(n_friends))
+
     friends = list()
     for i in range(n_friends):
         new_friend = get_friend(i + 1, n_friends)
@@ -42,8 +60,6 @@ if __name__ == "__main__":
             break
         else:
             friends.append(new_friend)
-    print("Friends: ")
-    print(friends)
 
     print("\nNow we will ask you to consider each pair of names provided. "
           "Each of these people is someone who you like to spend time with. "
@@ -57,5 +73,5 @@ if __name__ == "__main__":
     edges = []
     for pair in pairs:
         edges.append(get_edge(pair))
-    print("Edges: ")
-    print(edges)
+
+    save_edges(edges, name, pid)
