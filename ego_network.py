@@ -14,7 +14,8 @@ def get_friend(i, n):
 
 def get_edge(pair):
     """Ask the user whether two friends are friends with each other."""
-    q = "Do {0} and {1} like to spend time together? (enter 'y' or 'n') ".format(pair[0], pair[1])
+    q = "Do {0} and {1} like to spend time together? (enter 'y' or 'n') "
+    q = q.format(pair[0], pair[1])
     response = input(q)
     valid_responses = ['y', 'ye', 'yes', 'es', '1']
     connected = 0
@@ -23,11 +24,9 @@ def get_edge(pair):
     return (pair, connected)
 
 
-def save_edges(edges, name, pid):
+def save_network(nodes, edges, name, pid):
     """Save the egocentric graph."""
-    d = {'name': name, 'pid': pid}
-    for edge in edges:
-        d[edge[0]] = edge[1]
+    d = {'nodes': nodes, 'edges': edges, 'name': name, 'pid': pid}
 
     out_filename = "{0}-{1}.pickle".format(
         datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
@@ -37,29 +36,29 @@ def save_edges(edges, name, pid):
         pickle.dump(d, out_file)
 
 
-if __name__ == "__main__":
+def run_survey(max_friends=12):
+    """Run an egocentric network survey."""
     name = input("Please enter your name: ")
     pid = input("Please enter your participant ID: ")
 
-    print("\nPlease carefully read the following.\n")
+    print("\nPlease carefully read the following.")
 
     print("\nConsider the people with whom you like to spend your free time. "
           "In the last few months, who are the people you have been with most "
           "often for informal social activities, such as going out to lunch, "
           "dinner, drinks, films, visiting one another's homes, studying "
-          "together, exercising together, and so on?\n")
+          "together, exercising together, and so on?")
 
-    n_friends = 12
-    print("\nWe will ask you to enter up to {0} names. If you finish before "
-          "entering {0} names, enter \"DONE\".".format(n_friends))
+    print("\nPlease enter up to {0} names. If you finish before "
+          "{0} names, enter \"DONE\".\n".format(max_friends))
 
-    friends = list()
-    for i in range(n_friends):
-        new_friend = get_friend(i + 1, n_friends)
-        if new_friend == "DONE":
+    nodes = list()
+    for i in range(max_friends):
+        new_friend = get_friend(i + 1, max_friends)
+        if new_friend.lower() == 'done':
             break
         else:
-            friends.append(new_friend)
+            nodes.append(new_friend)
 
     print("\nNow we will ask you to consider each pair of names provided. "
           "Each of these people is someone who you like to spend time with. "
@@ -69,9 +68,24 @@ if __name__ == "__main__":
           "drinks, films, visting one another's homes, studying together, "
           "exercising together, and so on?\n")
 
-    pairs = itertools.combinations(friends, 2)
+    pairs = itertools.combinations(nodes, 2)
     edges = []
-    for pair in pairs:
-        edges.append(get_edge(pair))
 
-    save_edges(edges, name, pid)
+    # Everyone is connected to the ego
+    for node in nodes:
+        edges.append((name, node))
+
+    # Who is connected to whom?
+    for pair in pairs:
+        edge, connected = get_edge(pair)
+        if connected == 1:
+            edges.append(edge)
+
+    # The ego is a node too
+    nodes.append(name)
+
+    save_network(nodes, edges, name, pid)
+
+
+if __name__ == "__main__":
+    run_survey()
